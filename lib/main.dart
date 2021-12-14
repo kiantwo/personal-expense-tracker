@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sliding_sheet/sliding_sheet.dart';
 import 'package:intl/intl.dart';
 
+import 'classes/transaction.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -32,36 +34,17 @@ class PersonalExpenseTracker extends StatefulWidget {
 }
 
 class _PersonalExpenseTrackerState extends State<PersonalExpenseTracker> {
+  final List<Transaction> _transactions = [];
   final _chartInfo = [
-    {
-      'expense': 0,
-      'day': 'Tue',
-    },
-    {
-      'expense': 0,
-      'day': 'Wed',
-    },
-    {
-      'expense': 0,
-      'day': 'Thu',
-    },
-    {
-      'expense': 0,
-      'day': 'Fri',
-    },
-    {
-      'expense': 0,
-      'day': 'Sat',
-    },
-    {
-      'expense': 0,
-      'day': 'Sun',
-    },
-    {
-      'expense': 0,
-      'day': 'Mon',
-    },
+    {'expense': 0},
+    {'expense': 0},
+    {'expense': 0},
+    {'expense': 0},
+    {'expense': 0},
+    {'expense': 0},
+    {'expense': 0},
   ];
+  final date = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -81,29 +64,25 @@ class _PersonalExpenseTrackerState extends State<PersonalExpenseTracker> {
         ],
       ),
       body: Center(
-        child: Column(
-          children: [
-            _buildChart(context),
-            Text(
-              'No transactions added yet!',
-              style: TextStyle(
-                fontFamily: 'QuickSand',
-                fontWeight: FontWeight.w700,
-                fontSize: MediaQuery.of(context).size.width * 0.045,
-              ),
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 1,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
             ),
-            SizedBox(
-              height: MediaQuery.of(context).size.height * 0.0405,
+            child: ListView(
+              scrollDirection: Axis.vertical,
+              children: [
+                _buildChart(context),
+                if (_transactions.isEmpty)
+                  _buildEmptyTransaction()
+                else
+                  for (var transaction in _transactions) ...[
+                    _buildCard(transaction),
+                  ],
+              ],
             ),
-            Opacity(
-              opacity: 0.5,
-              child: Image(
-                image: const AssetImage('assets/images/waiting.png'),
-                height: MediaQuery.of(context).size.height * 0.30,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -117,6 +96,7 @@ class _PersonalExpenseTrackerState extends State<PersonalExpenseTracker> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      resizeToAvoidBottomInset: false,
     );
   }
 
@@ -156,6 +136,7 @@ class _PersonalExpenseTrackerState extends State<PersonalExpenseTracker> {
                   style: TextStyle(
                     fontSize: MediaQuery.of(context).size.width * 0.045,
                     fontFamily: 'QuickSand',
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 Container(
@@ -173,10 +154,13 @@ class _PersonalExpenseTrackerState extends State<PersonalExpenseTracker> {
                   ),
                 ),
                 Text(
-                  _chartInfo[i]['day'] as String,
+                  DateFormat('EEE').format(date
+                      .subtract(const Duration(days: 6))
+                      .add(Duration(days: i))),
                   style: TextStyle(
                     fontSize: MediaQuery.of(context).size.width * 0.0305,
                     fontFamily: 'QuickSand',
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -186,7 +170,91 @@ class _PersonalExpenseTrackerState extends State<PersonalExpenseTracker> {
     );
   }
 
+  Widget _buildEmptyTransaction() {
+    return Column(
+      children: [
+        Text(
+          'No transactions added yet!',
+          style: TextStyle(
+            fontFamily: 'QuickSand',
+            fontWeight: FontWeight.w700,
+            fontSize: MediaQuery.of(context).size.width * 0.045,
+          ),
+        ),
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.0405,
+        ),
+        Opacity(
+          opacity: 0.3,
+          child: Image(
+            image: const AssetImage('assets/images/waiting.png'),
+            height: MediaQuery.of(context).size.height * 0.25,
+            fit: BoxFit.cover,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCard(Transaction transaction) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: ListTile(
+                leading: CircleAvatar(
+                  radius: 30.0,
+                  child: FittedBox(
+                    fit: BoxFit.fitWidth,
+                    child: Text(
+                      NumberFormat.currency(
+                              locale: 'en-ph', decimalDigits: 2, symbol: '₱')
+                          .format(transaction.amount),
+                      style: TextStyle(
+                        fontFamily: 'QuickSand',
+                        fontSize: MediaQuery.of(context).size.width * 0.029,
+                      ),
+                    ),
+                  ),
+                ),
+                title: Text(
+                  transaction.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'QuickSand',
+                  ),
+                ),
+                subtitle: Text(
+                  DateFormat('MMMM dd, yyyy').format(transaction.date!),
+                ),
+                trailing: const Icon(
+                  Icons.delete,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 0,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAsBottomSheet(context) async {
+    // ignore: unused_local_variable
     final result = await showSlidingBottomSheet(context, builder: (context) {
       return SlidingSheetDialog(
         elevation: 8,
@@ -201,6 +269,17 @@ class _PersonalExpenseTrackerState extends State<PersonalExpenseTracker> {
         },
       );
     });
+    if (result != null) {
+      setState(() {
+        _transactions.add(
+          Transaction(
+            title: result.title,
+            amount: result.amount,
+            date: result.date,
+          ),
+        );
+      });
+    }
   }
 }
 
@@ -212,33 +291,77 @@ class TransactionForm extends StatefulWidget {
 }
 
 class _TransactionFormState extends State<TransactionForm> {
-  DateTime? date;
+  DateTime? _date;
+  final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
+  final Transaction _transactionInfo = Transaction(title: '', amount: 0);
+  bool _validate = false;
+
+  @override
+  void _dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // ignore: sized_box_for_whitespace
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
       child: Material(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10.0),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
             children: [
               TextFormField(
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
+                decoration: InputDecoration(
+                  border: const UnderlineInputBorder(),
                   labelText: 'Title',
+                  errorText: _titleController.text.isEmpty && _validate
+                      ? 'Field is required'
+                      : null,
+                  errorBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ),
                 ),
+                controller: _titleController,
               ),
               TextFormField(
-                decoration: const InputDecoration(
-                  border: UnderlineInputBorder(),
+                decoration: InputDecoration(
+                  border: const UnderlineInputBorder(),
                   labelText: 'Amount',
+                  errorText: _amountController.text.isEmpty && _validate
+                      ? 'Field is required'
+                      : null,
+                  errorBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.red),
+                  ),
                 ),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                controller: _amountController,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    getDate(),
+                  Column(
+                    children: [
+                      Text(
+                        _date == null
+                            ? 'No Date Chosen'
+                            : 'Picked Date: ' +
+                                DateFormat('MM/dd/yyyy').format(_date!),
+                      ),
+                      _date == null && _validate
+                          ? const Text(
+                              'Field is required.',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 12.0,
+                              ),
+                            )
+                          : const SizedBox(),
+                    ],
                   ),
                   TextButton(
                     onPressed: () {
@@ -257,7 +380,7 @@ class _TransactionFormState extends State<TransactionForm> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _setTransactionInfo,
                     child: const Text('Add Transaction'),
                   ),
                 ],
@@ -267,6 +390,26 @@ class _TransactionFormState extends State<TransactionForm> {
         ),
       ),
     );
+  }
+
+  void _setTransactionInfo() {
+    _titleController.text.isNotEmpty && _amountController.text.isNotEmpty
+        ? setState(() {
+            _validate = false;
+          })
+        : setState(() {
+            _validate = true;
+          });
+
+    if (_titleController.text.isNotEmpty &&
+        _amountController.text.isNotEmpty &&
+        _date != null) {
+      _transactionInfo.title = _titleController.text;
+      _transactionInfo.amount = double.parse(_amountController.text);
+      _transactionInfo.date = _date!;
+
+      Navigator.pop(context, _transactionInfo);
+    }
   }
 
   _selectDate(BuildContext context) async {
@@ -280,14 +423,6 @@ class _TransactionFormState extends State<TransactionForm> {
 
     if (newDate == null) return;
 
-    setState(() => date = newDate);
-  }
-
-  String getDate() {
-    if (date == null) {
-      return 'No Date Chosen';
-    } else {
-      return 'Picked Date: ' + DateFormat('MM/dd/yyyy').format(date!);
-    }
+    setState(() => _date = newDate);
   }
 }
