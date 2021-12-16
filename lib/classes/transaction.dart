@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class Transaction {
   String title;
-  double amount = 0;
+  double? amount;
   DateTime? date;
 
-  Transaction({required this.title, required this.amount, this.date});
+  Transaction({this.title = '', this.amount = 0, this.date});
 }
