@@ -401,7 +401,10 @@ class _TransactionFormState extends State<TransactionForm> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 controller: _amountController,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(
+                      RegExp(r'^(\d+)?\.?\d{0,2}')),
+                ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
