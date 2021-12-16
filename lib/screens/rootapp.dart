@@ -4,6 +4,13 @@ import 'package:personal_expense_tracker/classes/transaction.dart';
 import 'package:sliding_sheet/sliding_sheet.dart';
 import 'package:intl/intl.dart';
 
+//for date comparisons
+extension DateOnlyCompare on DateTime {
+  bool isSameDate(DateTime other) {
+    return year == other.year && month == other.month && day == other.day;
+  }
+}
+
 class MainPage extends StatefulWidget {
   const MainPage({Key? key}) : super(key: key);
 
@@ -35,6 +42,10 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _addTransaction(Transaction transaction) {
+    //pinpoint the day of transaction on the chart
+    int indexOfChart =
+        _chartInfo.indexWhere((inf) => inf.date!.isSameDate(transaction.date!));
+
     setState(() {
       _transactions.add(
         Transaction(
@@ -43,25 +54,25 @@ class _MainPageState extends State<MainPage> {
           date: transaction.date,
         ),
       );
-      //pinpoint the day of transaction on the chart
-      int indexOfChart = _chartInfo.indexWhere(
-          (inf) => inf.date!.weekday.compareTo(transaction.date!.weekday) == 0);
 
-      //add to the day's expense
-      _chartInfo[indexOfChart].amount =
-          _chartInfo[indexOfChart].amount! + transaction.amount!;
+      if (indexOfChart != -1) {
+        //if date in chart info, add to the day's expense
+        _chartInfo[indexOfChart].amount =
+            _chartInfo[indexOfChart].amount! + transaction.amount!;
+      }
     });
   }
 
   void _removeTransaction(Transaction transaction) {
+    //pinpoint the day of transaction on the chart
+    int indexOfChart =
+        _chartInfo.indexWhere((inf) => inf.date!.isSameDate(transaction.date!));
     setState(() {
-      //pinpoint the day of transaction on the chart
-      int indexOfChart = _chartInfo.indexWhere(
-          (inf) => inf.date!.weekday.compareTo(transaction.date!.weekday) == 0);
-
-      //subtract to the day's expense
-      _chartInfo[indexOfChart].amount =
-          _chartInfo[indexOfChart].amount! - transaction.amount!;
+      if (indexOfChart != -1) {
+        //if date in chart info, subtract to the day's expense
+        _chartInfo[indexOfChart].amount =
+            _chartInfo[indexOfChart].amount! - transaction.amount!;
+      }
 
       _transactions.remove(transaction);
     });
@@ -215,7 +226,7 @@ class _MainPageState extends State<MainPage> {
           ),
         ),
         //chart bar fill
-        _transactions.isEmpty
+        _transactions.isEmpty || dayAmount == 0
             ? const SizedBox(height: 0.0)
             : Container(
                 height: MediaQuery.of(context).size.height *
@@ -489,7 +500,7 @@ class _TransactionFormState extends State<TransactionForm> {
       initialDate: initialDate,
 
       //only make dates from current week available
-      firstDate: DateTime.now().subtract(const Duration(days: 6)),
+      firstDate: DateTime(DateTime.now().year - 5),
       lastDate: DateTime.now(),
     );
 
